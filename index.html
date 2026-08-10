@@ -86,7 +86,32 @@ section{padding:64px 0;position:relative}
   transform:skewX(-7deg);transform-origin:left bottom;
   filter:drop-shadow(0 6px 0 rgba(0,0,0,.55));
 }
-.title small{display:block;font-size:.5em;letter-spacing:.02em}
+.title .ch{
+  display:inline-block;transform-origin:50% 100%;
+  background-image:
+    linear-gradient(102deg,transparent 34%,rgba(255,255,255,.9) 46%,rgba(255,255,255,.25) 52%,transparent 62%),
+    linear-gradient(178deg,#FFF6D6 4%,var(--gold1) 26%,var(--gold2) 52%,#8A5F16 74%,var(--gold2) 100%);
+  background-size:260% 100%,100% 100%;
+  background-repeat:no-repeat;
+  background-position:-160% 0,0 0;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:
+    bounce var(--bounce,1.7s) infinite,
+    shine 6.5s linear infinite;
+  animation-delay:calc(var(--i) * .11s), calc(var(--i) * .07s);
+}
+@keyframes bounce{
+  0%,62%,100%{transform:translateY(0) scale(1,1)}
+  10%{transform:translateY(.02em) scale(1.06,.94)}
+  22%{transform:translateY(-.14em) scale(.97,1.05)}
+  36%{transform:translateY(-.22em) scale(1,1)}
+  50%{transform:translateY(0) scale(1.07,.92)}
+  57%{transform:translateY(-.03em) scale(.99,1.02)}
+}
+@keyframes shine{
+  0%,38%{background-position:-160% 0,0 0}
+  62%,100%{background-position:260% 0,0 0}
+}
 .tagline{
   margin:26px 0 0;font-size:clamp(.95rem,2.6vw,1.12rem);font-weight:700;
   color:var(--paper);letter-spacing:.06em;
@@ -294,7 +319,7 @@ footer strong{color:var(--paper);letter-spacing:.1em;font-weight:900;display:blo
       <span>PLATINUM CHAPTER</span>
     </div>
     <p class="kicker">品牌推推手</p>
-    <h1 class="title goldtext">搶分<br>爆走賽</h1>
+    <h1 class="title" aria-label="搶分爆走賽"><span class="ch" style="--i:0" aria-hidden="true">搶</span><span class="ch" style="--i:1" aria-hidden="true">分</span><br><span class="ch" style="--i:2" aria-hidden="true">爆</span><span class="ch" style="--i:3" aria-hidden="true">走</span><span class="ch" style="--i:4" aria-hidden="true">賽</span></h1>
     <p class="tagline">一起推廣品牌 · 一起累積影響力 · <em>一起搶分拿大獎</em></p>
 
     <dl class="strip">
