@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark only">
+<meta name="supported-color-schemes" content="dark">
 <title>品牌推推手 搶分爆走賽｜BNI 台南 大信白金分會</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +20,7 @@
   --maxw:1080px;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;background:#08080B;color-scheme:dark}
 body{
   margin:0; background:var(--ink); color:var(--paper);
   font-family:var(--han); font-weight:400; line-height:1.75;
@@ -102,6 +104,33 @@ section{padding:64px 0;position:relative}
 .strip dt{font-family:var(--disp);font-weight:800;letter-spacing:.18em;font-size:.7rem;color:var(--muted);text-transform:uppercase;margin:0 0 4px}
 .strip dd{margin:0;font-family:var(--disp);font-weight:900;font-style:italic;font-size:clamp(1.5rem,5vw,2.1rem);line-height:1;color:var(--gold1)}
 .strip dd small{font-family:var(--han);font-style:normal;font-size:.44em;font-weight:700;letter-spacing:.08em;color:var(--paper);margin-left:6px}
+
+/* countdown */
+.clock{
+  margin-top:14px;border:1px solid var(--line);border-radius:6px;padding:16px 18px 18px;
+  background:linear-gradient(180deg,rgba(207,31,38,.16),rgba(0,0,0,.42));
+}
+.clock .lab{
+  font-family:var(--disp);font-weight:900;font-style:italic;letter-spacing:.2em;
+  font-size:.74rem;text-transform:uppercase;color:var(--gold2);margin:0 0 12px;
+}
+.digits{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.digits .seg{
+  background:rgba(0,0,0,.5);border:1px solid rgba(227,184,76,.2);border-radius:4px;
+  padding:12px 4px 9px;text-align:center;
+}
+.digits b{
+  display:block;font-family:var(--disp);font-weight:900;font-style:italic;
+  font-size:clamp(1.9rem,8.5vw,2.9rem);line-height:.92;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(178deg,#FFF6D6,var(--gold1) 35%,var(--gold2) 70%,#9A6A18);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.digits em{
+  display:block;font-style:normal;font-size:.68rem;font-weight:700;letter-spacing:.24em;
+  color:var(--muted);margin-top:6px;text-indent:.24em;
+}
+.clock.over .lab{color:#E8A33C}
 
 /* ── scoring rules ───────────────────────── */
 .rules{display:grid;gap:14px}
@@ -193,13 +222,14 @@ section{padding:64px 0;position:relative}
 /* ── how to ──────────────────────────────── */
 .steps{counter-reset:s;display:grid;gap:12px;margin:0 0 26px;padding:0;list-style:none}
 .steps li{
-  counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start;
-  padding:13px 16px;background:rgba(255,255,255,.035);border-radius:4px;border:1px solid rgba(255,255,255,.06);
-  font-size:.93rem;
+  counter-increment:s;position:relative;
+  padding:13px 16px 13px 50px;background:rgba(255,255,255,.035);border-radius:4px;
+  border:1px solid rgba(255,255,255,.06);font-size:.93rem;line-height:1.8;
 }
 .steps li::before{
-  content:counter(s);font-family:var(--disp);font-weight:900;font-style:italic;font-size:1.3rem;
-  color:var(--gold2);line-height:1.3;
+  content:counter(s);position:absolute;left:16px;top:13px;
+  font-family:var(--disp);font-weight:900;font-style:italic;font-size:1.3rem;
+  color:var(--gold2);line-height:1.35;
 }
 .steps b{color:#fff}
 figure{margin:0 0 8px}
@@ -270,8 +300,18 @@ footer strong{color:var(--paper);letter-spacing:.1em;font-weight:900;display:blo
     <dl class="strip">
       <div><dt>Race Window</dt><dd>8/10<small>一</small> — 8/29<small>六</small></dd></div>
       <div><dt>Duration</dt><dd>3<small>週</small></dd></div>
-      <div><dt>Time Left</dt><dd id="left">—<small>天</small></dd></div>
+      <div><dt>Training</dt><dd>8/1 — 8/29</dd></div>
     </dl>
+
+    <div class="clock" id="clock">
+      <p class="lab" id="clocklab">Time Remaining · 距離結算還有</p>
+      <div class="digits">
+        <div class="seg"><b id="cd">--</b><em>天</em></div>
+        <div class="seg"><b id="ch">--</b><em>時</em></div>
+        <div class="seg"><b id="cm">--</b><em>分</em></div>
+        <div class="seg"><b id="cs">--</b><em>秒</em></div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -484,10 +524,26 @@ footer strong{color:var(--paper);letter-spacing:.1em;font-weight:900;display:blo
 
 <script>
 (function(){
-  /* 倒數 */
-  var end=new Date(2026,7,29,23,59,59);
-  var d=Math.max(0,Math.ceil((end-new Date())/86400000));
-  document.getElementById('left').firstChild.nodeValue=d;
+  /* 倒數計時 */
+  var END=new Date(2026,7,29,23,59,59),
+      cd=document.getElementById('cd'),ch=document.getElementById('ch'),
+      cm=document.getElementById('cm'),cs=document.getElementById('cs'),
+      clock=document.getElementById('clock'),lab=document.getElementById('clocklab');
+  function pad(n){return n<10?'0'+n:''+n;}
+  function tick(){
+    var s=Math.floor((END-new Date())/1000);
+    if(s<=0){
+      cd.textContent='0';ch.textContent='00';cm.textContent='00';cs.textContent='00';
+      lab.textContent='Race Finished · 活動已結束，感謝參與';
+      clock.classList.add('over');
+      clearInterval(timer);return;
+    }
+    cd.textContent=Math.floor(s/86400);
+    ch.textContent=pad(Math.floor(s/3600)%24);
+    cm.textContent=pad(Math.floor(s/60)%60);
+    cs.textContent=pad(s%60);
+  }
+  tick();var timer=setInterval(tick,1000);
 
   /* 計分器 */
   var i121=document.getElementById('i121'),iref=document.getElementById('iref'),
