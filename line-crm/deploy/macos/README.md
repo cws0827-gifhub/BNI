@@ -62,22 +62,20 @@ bash deploy/macos/install.sh
 ## 5. 讓 LINE 連得進來：Cloudflare Tunnel（建議）
 
 不用在路由器開 port，自動提供 HTTPS，而且**只開放 `/callback`，管理頁不會出現在網路上**。
-需要一個網域，並把網域的 DNS 交給 Cloudflare 管理（免費方案就夠用）。
+網域使用 **beauty-keys.com**，DNS 需要交給 Cloudflare 管理（免費方案就夠用），做法見 [`../cloudflare-relay/README.md`](../cloudflare-relay/README.md) 第 1 步。
 
 ```bash
 brew install cloudflared
-cloudflared tunnel login                       # 瀏覽器選你的網域
+cloudflared tunnel login                       # 瀏覽器選 beauty-keys.com
 cloudflared tunnel create line-crm             # 記下 Tunnel ID
-cloudflared tunnel route dns line-crm line.你的網域
+cloudflared tunnel route dns line-crm line.beauty-keys.com
 cp deploy/macos/cloudflared-config.example.yml ~/.cloudflared/config.yml
-open -e ~/.cloudflared/config.yml              # 填入 Tunnel ID、使用者名稱、網域
+open -e ~/.cloudflared/config.yml              # 填入 Tunnel ID、使用者名稱
 sudo cloudflared service install               # 開機自動啟動
 ```
 
-最後把 LINE Developers 的 Webhook URL 設為 `https://line.你的網域/callback`，按 **Verify** 應顯示 Success。
-
-**沒有網域的替代方案**：用 Synology 內建的 DDNS（免費的 `xxx.synology.me`）＋ 反向代理伺服器 ＋ Let's Encrypt 憑證，導向 `http://Mac-mini的IP:8765`。
-缺點是路由器要開 443 埠，而且管理頁也會暴露在網路上（只靠密碼保護）。長期還是建議買一個網域，一年約新台幣 300～500 元。
+⚠️ **LINE 的 Webhook 目前接在領健，不要直接改成 `https://line.beauty-keys.com/callback`**，否則領健會收不到訊息。
+要讓兩邊都收到，請看 [`../cloudflare-relay/README.md`](../cloudflare-relay/README.md)。
 
 ## 6. 在診所外看管理頁（選配）
 

@@ -4,7 +4,7 @@ tunnel: 請填 cloudflared tunnel create 產生的 Tunnel ID
 credentials-file: /Users/請填你的使用者名稱/.cloudflared/請填TunnelID.json
 
 ingress:
-  - hostname: line.請填你的網域
+  - hostname: line.beauty-keys.com
     path: ^/callback$
     service: http://localhost:8765
   # 其他路徑（包含管理頁）一律回 404
