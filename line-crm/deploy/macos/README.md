@@ -1,9 +1,9 @@
 # Mac mini ＋ Synology 部署指南
 
 ```
-客人 LINE → LINE 平台 → Cloudflare Tunnel → Mac mini :8765 /callback
+客人 LINE → LINE 平台 → Cloudflare Tunnel → 家裡的 Mac mini :8765 /callback
                                               │  （程式＋資料庫都在 Mac mini）
-                    諮詢師在診所內網開管理頁 ─┘
+ 診所同仁 → crm.beauty-keys.com → Cloudflare Access（email 驗證碼）─┘
                                               │ 每天 03:15 備份
                                               ▼
                                    Synology /backup/line-crm（保留 30 天）
@@ -13,6 +13,14 @@
 ```
 
 **分工原則**：Mac mini 負責執行程式，Synology 只放備份。
+
+## 0. Mac mini 放在家裡要注意的事
+
+客人的 LINE 對話（包含術後狀況描述）屬於個人資料，存放在診所以外的地方要多一層保護：
+- **開啟 FileVault**（系統設定 → 隱私權與安全性 → FileVault）：電腦遺失或被偷時，硬碟內容無法被讀取。
+- Mac 登入密碼要夠強，並開啟螢幕保護程式密碼；家人如果也會用這台電腦，**另外開一個使用者帳號給他們**。
+- 家裡 Wi-Fi 使用 WPA2／WPA3 和強密碼，路由器的管理密碼也要改掉預設值。
+- **家裡斷電或斷網時**，這段期間的訊息不會進到看板。若使用分流站，領健不受影響，只是我們的看板會漏掉這段時間的訊息。建議 Mac mini 和路由器一起接不斷電系統。
 ⚠️ 不要把資料庫直接放在 NAS 共用資料夾、讓程式透過網路讀寫：SQLite 經由 SMB 存取很容易損毀。
 
 ---
@@ -56,7 +64,8 @@ bash deploy/macos/install.sh
 `.env` 裡的 `NAS_BACKUP_DIR` 要填 **Finder 掛載後的實際路徑**，通常是 `/Volumes/backup/line-crm`。
 
 完成後：
-- 管理頁：`http://Mac名稱.local:8765`（診所內任何一台電腦或手機，連同一個 Wi-Fi 就能開）
+- 在家裡測試管理頁：`http://Mac名稱.local:8765`
+- 診所同仁使用的網址是 `https://crm.beauty-keys.com`，要先完成第 6 步
 - 先手動跑一次備份，確認 NAS 上出現檔案：`bash deploy/macos/backup.sh`
 
 ## 5. 讓 LINE 連得進來：Cloudflare Tunnel（建議）
@@ -69,6 +78,7 @@ brew install cloudflared
 cloudflared tunnel login                       # 瀏覽器選 beauty-keys.com
 cloudflared tunnel create line-crm             # 記下 Tunnel ID
 cloudflared tunnel route dns line-crm line.beauty-keys.com
+cloudflared tunnel route dns line-crm crm.beauty-keys.com
 cp deploy/macos/cloudflared-config.example.yml ~/.cloudflared/config.yml
 open -e ~/.cloudflared/config.yml              # 填入 Tunnel ID、使用者名稱
 sudo cloudflared service install               # 開機自動啟動
@@ -77,10 +87,24 @@ sudo cloudflared service install               # 開機自動啟動
 ⚠️ **LINE 的 Webhook 目前接在領健，不要直接改成 `https://line.beauty-keys.com/callback`**，否則領健會收不到訊息。
 要讓兩邊都收到，請看 [`../cloudflare-relay/README.md`](../cloudflare-relay/README.md)。
 
-## 6. 在診所外看管理頁（選配）
+## 6. 診所同仁打開管理頁：Cloudflare Access（必做）
 
-在 Mac mini 和手機上都安裝 **Tailscale**（Synology 套件中心也有），就能在外面安全地打開 `http://Mac名稱:8765`，
-不需要把管理頁公開到網路上。
+Mac mini 在家裡，診所的電腦和手機要透過網路連進來。用 Cloudflare Access 在管理頁前面加一道門：
+**只有你指定的 email 能進來，每次登入都會寄一組驗證碼到信箱**，同仁不用安裝任何 App。
+
+⚠️ **一定要先設定 Access，再啟動 Tunnel**，否則 `crm.beauty-keys.com` 會有一段時間只靠密碼保護。
+
+1. Cloudflare 後台 → **Zero Trust**（第一次使用時選 Free 方案，50 人以內免費）
+2. Access → Applications → **Add an application → Self-hosted**
+   - Application domain：`crm.beauty-keys.com`
+   - Session duration：建議 `24 hours`
+3. 新增 Policy：
+   - Action：**Allow**
+   - Include → **Emails**：逐一填入可以看管理頁的同仁 email
+4. Login methods 勾選 **One-time PIN**（寄驗證碼到信箱）
+5. 儲存後，用無痕視窗打開 `https://crm.beauty-keys.com`：應該先看到 Cloudflare 的登入頁，驗證 email 後才會出現管理頁的帳號密碼視窗。
+
+同仁離職時，從 Policy 移除他的 email 即可，不需要改密碼。
 
 ---
 
