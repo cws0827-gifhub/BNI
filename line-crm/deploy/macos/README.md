@@ -84,7 +84,8 @@ cloudflared tunnel route dns line-crm line.beauty-keys.com
 cloudflared tunnel route dns line-crm crm.beauty-keys.com
 cp deploy/macos/cloudflared-config.example.yml ~/.cloudflared/config.yml
 open -e ~/.cloudflared/config.yml              # 填入 Tunnel ID、使用者名稱
-sudo cloudflared service install               # 開機自動啟動
+cloudflared tunnel ingress validate            # 檢查設定檔
+cloudflared service install                    # 登入後自動啟動（不要加 sudo：加了會改讀 /etc/cloudflared 的設定）
 ```
 
 ⚠️ **LINE 的 Webhook 目前接在領健，不要直接改成 `https://line.beauty-keys.com/callback`**，否則領健會收不到訊息。
