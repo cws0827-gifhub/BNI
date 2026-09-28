@@ -43,23 +43,16 @@ cd line-crm
 pip install -r requirements.txt
 cp .env.example .env        # 填入上面拿到的值
 set -a; source .env; set +a
-python app.py               # http://localhost:5000
+python app.py               # http://localhost:8765
 ```
 
 LINE 需要 https 公開網址才能呼叫 webhook，本機測試可用 [ngrok](https://ngrok.com/)：
-`ngrok http 5000`，把它給的 `https://xxxx.ngrok-free.app/callback` 貼到 Webhook URL。
+`ngrok http 8765`，把它給的 `https://xxxx.ngrok-free.app/callback` 貼到 Webhook URL。
 
 ## 三、正式部署
 
-任何能跑 Python 的主機都可以（Render、Railway、Zeabur、Google Cloud Run、診所自己的電腦＋固定網址）。
-啟動指令：
-
-```bash
-gunicorn -w 1 -b 0.0.0.0:$PORT app:app
-```
-
-- 環境變數照 `.env.example` 設定。
-- 資料庫是 `line_crm.db` 一個檔案，**主機要有永久磁碟**（Render 要加 Disk、Cloud Run 不適合直接放 SQLite），並定期備份。
+- **Mac mini ＋ Synology**：照 [`deploy/macos/README.md`](deploy/macos/README.md)，一個指令就能安裝完成，含開機自動啟動、每晚備份到 NAS、Cloudflare Tunnel。
+- 其他主機（Render、Railway、Zeabur…）：啟動指令為 `gunicorn -w 1 -b 0.0.0.0:$PORT app:app`，環境變數照 `.env.example` 設定。主機要有永久磁碟，並定期備份 `line_crm.db`。
 
 ## 四、日常使用
 
